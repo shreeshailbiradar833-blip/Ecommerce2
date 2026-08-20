@@ -6,25 +6,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import org.springframework.http.HttpMethod;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.web.SecurityFilterChain;
-
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
 
 @Configuration
 public class SecurityConfig {
@@ -32,20 +21,10 @@ public class SecurityConfig {
     @Autowired
     private MyUserDetailsService userDetailsService;
 
-
-    // ==========================================
-    // PASSWORD ENCODER
-    // ==========================================
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-
-    // ==========================================
-    // AUTHENTICATION PROVIDER
-    // ==========================================
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -58,11 +37,6 @@ public class SecurityConfig {
         return provider;
     }
 
-
-    // ==========================================
-    // AUTHENTICATION MANAGER
-    // ==========================================
-
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration
@@ -71,165 +45,44 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
-
-    // ==========================================
-    // CORS CONFIGURATION
-    // ==========================================
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-
-        CorsConfiguration configuration =
-                new CorsConfiguration();
-
-        /*
-         * TEMPORARY:
-         * Allow requests from your Netlify frontend.
-         *
-         * We are using allowedOriginPatterns instead
-         * of allowedOrigins so that "*" works correctly.
-         */
-        configuration.setAllowedOriginPatterns(
-                Arrays.asList("*")
-        );
-
-        configuration.setAllowedMethods(
-                Arrays.asList(
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "DELETE",
-                        "PATCH",
-                        "OPTIONS"
-                )
-        );
-
-        configuration.setAllowedHeaders(
-                Arrays.asList("*")
-        );
-
-        /*
-         * Your frontend sends the JWT in the Authorization
-         * header. We don't need browser credentials/cookies.
-         */
-        configuration.setAllowCredentials(false);
-
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
-
-        return source;
-    }
-
-
-    // ==========================================
-    // SECURITY FILTER CHAIN
-    // ==========================================
-
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http
     ) throws Exception {
 
         http
-
-                // ==================================
-                // CSRF
-                // ==================================
-
                 .csrf(csrf -> csrf.disable())
 
-
-                // ==================================
-                // ENABLE CORS
-                // ==================================
-
-                .cors(Customizer.withDefaults())
-
-
-                // ==================================
-                // AUTHORIZATION
-                // ==================================
+                // IMPORTANT:
+                // Do NOT disable CORS here
+                .cors(cors -> {})
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // CORS preflight requests
-                        .requestMatchers(
-                                HttpMethod.OPTIONS,
-                                "/**"
-                        ).permitAll()
+                        .requestMatchers("/api/auth/**")
+                        .permitAll()
 
+                        .requestMatchers("/api/products/**")
+                        .permitAll()
 
-                        // ==================================
-                        // AUTHENTICATION
-                        // ==================================
+                        .requestMatchers("/api/product/**")
+                        .permitAll()
 
-                        .requestMatchers(
-                                "/api/auth/**"
-                        ).permitAll()
+                        .requestMatchers("/api/cart/**")
+                        .permitAll()
 
+                        .requestMatchers("/api/payment/**")
+                        .permitAll()
 
-                        // ==================================
-                        // PRODUCTS
-                        // ==================================
+                        .requestMatchers("/api/orders/**")
+                        .permitAll()
 
-                        .requestMatchers(
-                                "/api/products/**",
-                                "/api/product/**"
-                        ).permitAll()
+                        .requestMatchers("/h2-console/**")
+                        .permitAll()
 
-
-                        // ==================================
-                        // CART
-                        // ==================================
-
-                        .requestMatchers(
-                                "/api/cart/**"
-                        ).permitAll()
-
-
-                        // ==================================
-                        // PAYMENT
-                        // ==================================
-
-                        .requestMatchers(
-                                "/api/payment/**"
-                        ).permitAll()
-
-
-                        // ==================================
-                        // ORDERS
-                        // ==================================
-
-                        .requestMatchers(
-                                "/api/orders/**"
-                        ).permitAll()
-
-
-                        // ==================================
-                        // H2 CONSOLE
-                        // ==================================
-
-                        .requestMatchers(
-                                "/h2-console/**"
-                        ).permitAll()
-
-
-                        // ==================================
-                        // EVERYTHING ELSE
-                        // ==================================
-
-                        .anyRequest().permitAll()
+                        .anyRequest()
+                        .permitAll()
                 )
-
-
-                // ==================================
-                // STATELESS
-                // ==================================
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -237,19 +90,7 @@ public class SecurityConfig {
                         )
                 )
 
-
-                // ==================================
-                // AUTHENTICATION PROVIDER
-                // ==================================
-
-                .authenticationProvider(
-                        authenticationProvider()
-                );
-
-
-        // ==========================================
-        // H2 CONSOLE
-        // ==========================================
+                .authenticationProvider(authenticationProvider());
 
         http.headers(headers ->
                 headers.frameOptions(frame ->
@@ -257,7 +98,39 @@ public class SecurityConfig {
                 )
         );
 
-
         return http.build();
+    }
+
+    @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+
+        org.springframework.web.cors.CorsConfiguration configuration =
+                new org.springframework.web.cors.CorsConfiguration();
+
+        configuration.setAllowedOrigins(java.util.List.of(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://YOUR-NETLIFY-SITE.netlify.app"
+        ));
+
+        configuration.setAllowedMethods(java.util.List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH",
+                "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(java.util.List.of("*"));
+
+        configuration.setAllowCredentials(true);
+
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
+                new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
     }
 }
