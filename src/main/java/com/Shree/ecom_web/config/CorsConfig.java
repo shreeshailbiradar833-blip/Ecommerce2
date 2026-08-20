@@ -16,6 +16,7 @@ public class CorsConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
+        // Allow both local development and deployed frontend
         configuration.setAllowedOrigins(
                 List.of(
                         "http://localhost:5173",
@@ -29,7 +30,6 @@ public class CorsConfig {
                         "POST",
                         "PUT",
                         "DELETE",
-                        "PATCH",
                         "OPTIONS"
                 )
         );
