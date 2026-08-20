@@ -9,7 +9,7 @@ import org.springframework.web.client.RestClient;
 import java.util.Date;
 import java.util.List;
 
-@Component
+//@Component
 public class DataInitializer implements CommandLineRunner {
 
     private final ProdRepo productRepo;
