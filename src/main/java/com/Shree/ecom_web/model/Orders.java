@@ -1,12 +1,17 @@
 package com.Shree.ecom_web.model;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 
 @Entity
 @Table(name = "orders")
@@ -17,6 +22,52 @@ public class Orders {
     private int id;
 
     private int userId;
+
+    private String username;
+
+    private String firstName;
+
+    private String lastName;
+
+    private String phone;
+
+    private String address;
+
+    private String city;
+
+    private String state;
+
+    private String pincode;
+
+    private double totalAmount;
+
+    private String paymentStatus = "PENDING";
+
+    private String orderStatus = "PLACED";
+
+    private LocalDateTime orderDate = LocalDateTime.now();
+
+    /*
+     * One Order has many OrderItems.
+     *
+     * The foreign key order_id is stored
+     * inside the order_items table.
+     *
+     * IMPORTANT:
+     * This prevents Hibernate from creating
+     * a separate orders_items join table.
+     */
+    @OneToMany(
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JoinColumn(name = "order_id")
+    private List<OrderItem> items = new ArrayList<>();
+
+
+    // =========================
+    // GETTERS AND SETTERS
+    // =========================
 
     public int getId() {
         return id;
@@ -137,34 +188,4 @@ public class Orders {
     public void setItems(List<OrderItem> items) {
         this.items = items;
     }
-
-    private String username;
-
-    private String firstName;
-
-    private String lastName;
-
-    private String phone;
-
-    private String address;
-
-    private String city;
-
-    private String state;
-
-    private String pincode;
-
-    private double totalAmount;
-
-    private String paymentStatus = "PENDING";
-
-    private String orderStatus = "PLACED";
-
-    private LocalDateTime orderDate = LocalDateTime.now();
-
-    @OneToMany(
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private List<OrderItem> items = new ArrayList<>();
 }

@@ -1,8 +1,10 @@
 package com.Shree.ecom_web.model;
 
-import jakarta.persistence.*;
-import lombok.Data;
-
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "order_items")
@@ -16,6 +18,17 @@ public class OrderItem {
 
     private String productName;
 
+    private double price;
+
+    private int quantity;
+
+    private double subtotal;
+
+
+    // =========================
+    // GETTERS AND SETTERS
+    // =========================
+
     public int getId() {
         return id;
     }
@@ -24,20 +37,20 @@ public class OrderItem {
         this.id = id;
     }
 
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
     public int getProductId() {
         return productId;
     }
 
     public void setProductId(int productId) {
         this.productId = productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 
     public double getPrice() {
@@ -63,10 +76,4 @@ public class OrderItem {
     public void setSubtotal(double subtotal) {
         this.subtotal = subtotal;
     }
-
-    private double price;
-
-    private int quantity;
-
-    private double subtotal;
 }
