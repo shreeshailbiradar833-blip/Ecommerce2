@@ -25,21 +25,71 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("STARTING PRODUCT DATA INITIALIZATION");
         System.out.println("======================================");
 
-        // Remove old products
-        productRepo.deleteAll();
+        /*
+         * IMPORTANT:
+         * Do NOT delete existing products.
+         *
+         * Render can restart the application several times.
+         * We only initialize products when the database is empty.
+         */
+
+        long existingProducts = productRepo.count();
+
+        System.out.println(
+                "Existing products in database: "
+                        + existingProducts
+        );
+
+        /*
+         * If products already exist, don't reload them.
+         */
+        if (existingProducts > 0) {
+
+            System.out.println(
+                    "Products already exist."
+            );
+
+            System.out.println(
+                    "Skipping product initialization."
+            );
+
+            System.out.println("======================================");
+
+            return;
+        }
+
+        System.out.println(
+                "No products found."
+        );
+
+        System.out.println(
+                "Loading products from DummyJSON..."
+        );
 
         try {
 
             RestClient client = RestClient.create();
 
+            /*
+             * Fetch products from DummyJSON.
+             */
             DummyResponse response = client
                     .get()
                     .uri("https://dummyjson.com/products?limit=0")
                     .retrieve()
                     .body(DummyResponse.class);
 
-            if (response == null || response.products == null) {
-                System.out.println("Could not fetch products.");
+            /*
+             * Check response.
+             */
+            if (response == null
+                    || response.products == null
+                    || response.products.isEmpty()) {
+
+                System.out.println(
+                        "Could not fetch products from DummyJSON."
+                );
+
                 return;
             }
 
@@ -51,7 +101,7 @@ public class DataInitializer implements CommandLineRunner {
             int count = 0;
 
             /*
-             * First save the real products.
+             * Save the real products first.
              */
             for (DummyProduct dp : response.products) {
 
@@ -59,36 +109,45 @@ public class DataInitializer implements CommandLineRunner {
                     break;
                 }
 
-                Product product = convertProduct(dp, count + 1);
+                Product product =
+                        convertProduct(dp, count + 1);
 
                 productRepo.save(product);
 
                 count++;
 
                 System.out.println(
-                        "Saved " + count + " : " + product.getName()
+                        "Saved "
+                                + count
+                                + " : "
+                                + product.getName()
                 );
             }
 
             /*
-             * If fewer than 500 products were received,
-             * create additional products using the same
-             * matching image/product information.
+             * If DummyJSON contains fewer than 500 products,
+             * create additional products using the existing
+             * product information.
              */
-            int originalCount = response.products.size();
+            int originalCount =
+                    response.products.size();
 
             int index = 0;
 
             while (count < 500) {
 
                 DummyProduct dp =
-                        response.products.get(index % originalCount);
+                        response.products.get(
+                                index % originalCount
+                        );
 
                 Product product =
                         convertProduct(dp, count + 1);
 
                 product.setName(
-                        dp.title + " - Edition " + (count + 1)
+                        dp.title
+                                + " - Edition "
+                                + (count + 1)
                 );
 
                 productRepo.save(product);
@@ -99,21 +158,39 @@ public class DataInitializer implements CommandLineRunner {
             }
 
             System.out.println("======================================");
+
             System.out.println(
-                    "TOTAL PRODUCTS SAVED: " + count
+                    "TOTAL PRODUCTS SAVED: "
+                            + count
             );
+
             System.out.println("======================================");
 
         } catch (Exception e) {
 
             System.out.println(
+                    "======================================"
+            );
+
+            System.out.println(
                     "ERROR WHILE LOADING PRODUCTS:"
+            );
+
+            System.out.println(
+                    e.getMessage()
+            );
+
+            System.out.println(
+                    "======================================"
             );
 
             e.printStackTrace();
         }
     }
 
+    /*
+     * Convert DummyJSON product into our Product entity.
+     */
     private Product convertProduct(
             DummyProduct dp,
             int newId
@@ -121,7 +198,9 @@ public class DataInitializer implements CommandLineRunner {
 
         Product product = new Product();
 
-        product.setName(dp.title);
+        product.setName(
+                dp.title
+        );
 
         product.setDescription(
                 dp.description
@@ -149,11 +228,19 @@ public class DataInitializer implements CommandLineRunner {
                 dp.discountPercentage
         );
 
+        /*
+         * Calculate final price after discount.
+         */
         double finalPrice =
-                dp.price -
-                        (dp.price *
-                                dp.discountPercentage /
-                                100);
+                dp.price
+                        -
+                        (
+                                dp.price
+                                        *
+                                        dp.discountPercentage
+                                        /
+                                        100
+                        );
 
         product.setFinalPrice(
                 finalPrice
@@ -190,9 +277,8 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         /*
-         * IMPORTANT:
-         * We use the actual product-specific
-         * image supplied by DummyJSON.
+         * Use the product-specific image
+         * supplied by DummyJSON.
          */
         product.setImageUrl(
                 dp.thumbnail
@@ -202,26 +288,37 @@ public class DataInitializer implements CommandLineRunner {
          * We don't need to store the actual
          * image bytes in the database.
          */
-        product.setImageData(null);
-        product.setImageName(null);
-        product.setImageType(null);
+        product.setImageData(
+                null
+        );
+
+        product.setImageName(
+                null
+        );
+
+        product.setImageType(
+                null
+        );
 
         return product;
     }
 
     /*
-     * Response from DummyJSON
+     * Response from DummyJSON.
      */
     public static class DummyResponse {
 
         public List<DummyProduct> products;
+
         public int total;
+
         public int skip;
+
         public int limit;
     }
 
     /*
-     * Product returned by DummyJSON
+     * Product returned by DummyJSON.
      */
     public static class DummyProduct {
 
@@ -249,7 +346,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     /*
-     * Review object
+     * Review object returned by DummyJSON.
      */
     public static class DummyReview {
 
